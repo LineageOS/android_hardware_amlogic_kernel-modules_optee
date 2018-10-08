@@ -29,10 +29,15 @@
 #include "../include/linux/arm-smccc.h"
 #include "optee_private.h"
 #include "optee_smc.h"
+#include <linux/sched.h>
+#include <linux/syscalls.h>
+#include <asm/smp_plat.h>
 
 #define DRIVER_NAME "optee"
 
 #define OPTEE_SHM_NUM_PRIV_PAGES	4
+
+extern void optee_set_sys(void);
 
 /**
  * optee_from_msg_param() - convert from OPTEE_MSG parameters to
@@ -379,7 +384,12 @@ optee_config_shm_memremap(optee_invoke_fn *invoke_fn, void **memremaped_shm)
 		return ERR_PTR(-EINVAL);
 	}
 
-	va = ioremap_cache(paddr, size);
+	/* For normal memory we already have a cacheable mapping. */
+	if (pfn_valid(__phys_to_pfn(paddr)))
+		va = (void __iomem *)__phys_to_virt(paddr);
+	else
+		va = ioremap_cache(paddr, size);
+
 	if (!va) {
 		pr_err("shared memory ioremap failed\n");
 		return ERR_PTR(-EINVAL);
@@ -501,7 +511,7 @@ static int optee_probe(struct platform_device *pdev)
 
 	optee_enable_shm_cache(optee);
 
-	pr_info("initialized driver\n");
+	pr_info("initialized driver!!!!\n");
 	return 0;
 err:
 	if (optee) {
@@ -592,7 +602,14 @@ static int __init optee_driver_init(void)
 		return -EINVAL;
 	}
 
-	return platform_driver_register(&optee_driver);
+	rc = platform_driver_register(&optee_driver);
+	if (rc != 0) {
+		pr_err("failed to register driver %s\n", DRIVER_NAME);
+		return -EINVAL;
+	}
+
+	optee_set_sys();
+	return rc;
 }
 module_init(optee_driver_init);
 

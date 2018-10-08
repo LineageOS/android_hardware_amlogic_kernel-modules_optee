@@ -6,19 +6,25 @@ KERNEL_DIR := kernel/common_3.14
 else
 KERNEL_DIR := common
 endif
-KERNEL_OUT_DIR := out/target/product/$(TARGET_BOOTLOADER_BOARD_NAME)/obj/KERNEL_OBJ
+KERNEL_OUT_DIR := $(PRODUCT_OUT)/obj/KERNEL_OBJ
+ifeq ($(KERNEL_A32_SUPPORT), true)
+KERNEL_ARCH := arm
+KERNEL_DRIVER_CROSS_COMPILE := /opt/gcc-linaro-6.3.1-2017.02-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-
+KERNEL_CONFIG=meson64_a32_defconfig
+else
 KERNEL_ARCH := arm64
-PREFIX_CROSS_COMPILE := aarch64-linux-gnu-
+KERNEL_DRIVER_CROSS_COMPILE := aarch64-linux-gnu-
 KERNEL_CONFIG=meson64_defconfig
+endif
 
 include $(CLEAR_VARS)
 $(info $(shell if [ ! -d $(KERNEL_OUT_DIR) ]; then mkdir -p $(KERNEL_OUT_DIR); fi))
 
-$(info $(shell if [ ! -e $(KERNEL_OUT_DIR)/include/generated/autoconf.h ]; then $(MAKE) -C $(KERNEL_DIR) O=../$(KERNEL_OUT_DIR) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(PREFIX_CROSS_COMPILE) $(KERNEL_CONFIG); fi))
+$(info $(shell if [ ! -e $(KERNEL_OUT_DIR)/include/generated/autoconf.h ]; then $(MAKE) -C $(KERNEL_DIR) O=../$(KERNEL_OUT_DIR) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(KERNEL_DRIVER_CROSS_COMPILE) $(KERNEL_CONFIG); fi))
 
-$(info $(shell if [ ! -e $(KERNEL_OUT_DIR)/include/generated/autoconf.h ]; then $(MAKE) -C $(KERNEL_DIR) O=../$(KERNEL_OUT_DIR) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(PREFIX_CROSS_COMPILE) modules_prepare; fi))
+$(info $(shell if [ ! -e $(KERNEL_OUT_DIR)/include/generated/autoconf.h ]; then $(MAKE) -C $(KERNEL_DIR) O=../$(KERNEL_OUT_DIR) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(KERNEL_DRIVER_CROSS_COMPILE) modules_prepare; fi))
 
-$(info $(shell $(MAKE) -C $(shell pwd)/$(KERNEL_OUT_DIR) M=$(shell pwd)/$(BOARD_AML_VENDOR_PATH)/tdk/linuxdriver/ ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(PREFIX_CROSS_COMPILE) modules))
+$(info $(shell $(MAKE) -C $(shell pwd)/$(KERNEL_OUT_DIR) M=$(shell pwd)/$(BOARD_AML_VENDOR_PATH)/tdk/linuxdriver/ KERNEL_A32_SUPPORT=$(KERNEL_A32_SUPPORT) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(KERNEL_DRIVER_CROSS_COMPILE) modules))
 
 $(info $(shell mkdir -p $(PRODUCT_OUT)/obj/lib))
 $(info $(shell cp -vf $(LOCAL_PATH)/optee/optee_armtz.ko $(PRODUCT_OUT)/obj/lib))
