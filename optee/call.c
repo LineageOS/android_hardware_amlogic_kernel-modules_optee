@@ -21,23 +21,11 @@
 #include <linux/uaccess.h>
 #include "optee_private.h"
 #include "optee_smc.h"
-#include <linux/sched.h>
-#include <linux/syscalls.h>
-#include <asm/smp_plat.h>
-#include <linux/amlogic/cpu_version.h>
-#include <asm/cputype.h>
-#include <linux/delay.h>
 
 struct optee_call_waiter {
 	struct list_head list_node;
 	struct completion c;
 };
-
-int (*tee_get_meson_cpu_version)(int level);
-unsigned int chipid = 0;
-void optee_set_sys(void);
-void optee_set_affinity_a53(void);
-void optee_release_affinity_a53(void);
 
 static void optee_cq_wait_init(struct optee_call_queue *cq,
 			       struct optee_call_waiter *w)
@@ -232,7 +220,6 @@ int optee_open_session(struct tee_context *ctx,
 	struct optee_msg_arg *msg_arg;
 	phys_addr_t msg_parg;
 	struct optee_session *sess = NULL;
-	long cpu;
 
 	/* +2 for the meta parameters added below */
 	shm = get_msg_arg(ctx, arg->num_params + 2, &msg_arg, &msg_parg);
@@ -264,23 +251,10 @@ int optee_open_session(struct tee_context *ctx,
 		goto out;
 	}
 
-	optee_set_affinity_a53();
-
 	if (optee_do_call_with_arg(ctx, msg_parg)) {
 		msg_arg->ret = TEEC_ERROR_COMMUNICATION;
 		msg_arg->ret_origin = TEEC_ORIGIN_COMMS;
 	}
-
-#if 1
-	if (chipid == MESON_CPU_MAJOR_ID_G12B) {
-		cpu = read_cpuid_mpidr();
-		cpu &= 0xfff;
-		//if ((cpu != 0) && (cpu != 1))
-		if (cpu != 0)
-			pr_info("!!!!!!!!!!!!%s:%lx\n", __func__, cpu);
-	}
-#endif
-	optee_release_affinity_a53();
 
 	if (msg_arg->ret == TEEC_SUCCESS) {
 		/* A new session has been created, add it to the list. */
@@ -304,6 +278,7 @@ int optee_open_session(struct tee_context *ctx,
 	}
 out:
 	tee_shm_free(shm);
+
 	return rc;
 }
 
@@ -314,7 +289,6 @@ int optee_close_session(struct tee_context *ctx, u32 session)
 	struct optee_msg_arg *msg_arg;
 	phys_addr_t msg_parg;
 	struct optee_session *sess;
-	long cpu;
 
 	/* Check that the session is valid and remove it from the list */
 	mutex_lock(&ctxdata->mutex);
@@ -332,20 +306,7 @@ int optee_close_session(struct tee_context *ctx, u32 session)
 
 	msg_arg->cmd = OPTEE_MSG_CMD_CLOSE_SESSION;
 	msg_arg->session = session;
-
-	optee_set_affinity_a53();
 	optee_do_call_with_arg(ctx, msg_parg);
-
-#if 1
-	if (chipid == MESON_CPU_MAJOR_ID_G12B) {
-		cpu = read_cpuid_mpidr();
-		cpu &= 0xfff;
-		//if ((cpu != 0) && (cpu != 1))
-		if (cpu != 0)
-			pr_info("!!!!!!!!!!!!%s:%lx\n", __func__, cpu);
-	}
-#endif
-	optee_release_affinity_a53();
 
 	tee_shm_free(shm);
 	return 0;
@@ -360,7 +321,6 @@ int optee_invoke_func(struct tee_context *ctx, struct tee_ioctl_invoke_arg *arg,
 	phys_addr_t msg_parg;
 	struct optee_session *sess;
 	int rc;
-	long cpu;
 
 	/* Check that the session is valid */
 	mutex_lock(&ctxdata->mutex);
@@ -372,7 +332,6 @@ int optee_invoke_func(struct tee_context *ctx, struct tee_ioctl_invoke_arg *arg,
 	shm = get_msg_arg(ctx, arg->num_params, &msg_arg, &msg_parg);
 	if (IS_ERR(shm))
 		return PTR_ERR(shm);
-
 	msg_arg->cmd = OPTEE_MSG_CMD_INVOKE_COMMAND;
 	msg_arg->func = arg->func;
 	msg_arg->session = arg->session;
@@ -382,22 +341,10 @@ int optee_invoke_func(struct tee_context *ctx, struct tee_ioctl_invoke_arg *arg,
 	if (rc)
 		goto out;
 
-	optee_set_affinity_a53();
 	if (optee_do_call_with_arg(ctx, msg_parg)) {
 		msg_arg->ret = TEEC_ERROR_COMMUNICATION;
 		msg_arg->ret_origin = TEEC_ORIGIN_COMMS;
 	}
-
-#if 1
-	if (chipid == MESON_CPU_MAJOR_ID_G12B) {
-		cpu = read_cpuid_mpidr();
-		cpu &= 0xfff;
-		//if ((cpu != 0) && (cpu != 1))
-		if (cpu != 0)
-			pr_info("!!!!!!!!!!!!%s:%lx\n", __func__, cpu);
-	}
-#endif
-	optee_release_affinity_a53();
 
 	if (optee_from_msg_param(param, arg->num_params, msg_arg->params)) {
 		msg_arg->ret = TEEC_ERROR_COMMUNICATION;
@@ -418,7 +365,6 @@ int optee_cancel_req(struct tee_context *ctx, u32 cancel_id, u32 session)
 	struct optee_msg_arg *msg_arg;
 	phys_addr_t msg_parg;
 	struct optee_session *sess;
-	long cpu;
 
 	/* Check that the session is valid */
 	mutex_lock(&ctxdata->mutex);
@@ -434,20 +380,7 @@ int optee_cancel_req(struct tee_context *ctx, u32 cancel_id, u32 session)
 	msg_arg->cmd = OPTEE_MSG_CMD_CANCEL;
 	msg_arg->session = session;
 	msg_arg->cancel_id = cancel_id;
-
-	optee_set_affinity_a53();
 	optee_do_call_with_arg(ctx, msg_parg);
-
-#if 1
-	if (chipid == MESON_CPU_MAJOR_ID_G12B) {
-		cpu = read_cpuid_mpidr();
-		cpu &= 0xfff;
-		//if ((cpu != 0) && (cpu != 1))
-		if (cpu != 0)
-			pr_info("!!!!!!!!!!!!%s:%lx\n", __func__, cpu);
-	}
-#endif
-	optee_release_affinity_a53();
 
 	tee_shm_free(shm);
 	return 0;
@@ -469,7 +402,6 @@ void optee_enable_shm_cache(struct optee *optee)
 
 		optee->invoke_fn(OPTEE_SMC_ENABLE_SHM_CACHE, 0, 0, 0, 0, 0, 0,
 				 0, &res);
-
 		if (res.a0 == OPTEE_SMC_RETURN_OK)
 			break;
 		optee_cq_wait_for_completion(&optee->call_queue, &w);
@@ -496,7 +428,6 @@ void optee_disable_shm_cache(struct optee *optee)
 
 		optee->invoke_fn(OPTEE_SMC_DISABLE_SHM_CACHE, 0, 0, 0, 0, 0, 0,
 				 0, &res.smccc);
-
 		if (res.result.status == OPTEE_SMC_RETURN_ENOTAVAIL)
 			break; /* All shm's freed */
 		if (res.result.status == OPTEE_SMC_RETURN_OK) {
@@ -510,30 +441,4 @@ void optee_disable_shm_cache(struct optee *optee)
 		}
 	}
 	optee_cq_wait_final(&optee->call_queue, &w);
-}
-
-void optee_set_sys(void)
-{
-	tee_get_meson_cpu_version = (int(*)(int))kallsyms_lookup_name("get_meson_cpu_version");
-	chipid = tee_get_meson_cpu_version(0);
-	pr_info("chipid-new: %x\n", chipid);
-}
-
-void optee_set_affinity_a53(void)
-{
-	long cpu;
-
-	if (chipid == MESON_CPU_MAJOR_ID_G12B) {
-		set_cpus_allowed_ptr(current, cpumask_of(0));
-		cpu = read_cpuid_mpidr();
-		cpu &= 0xfff;
-		if (cpu != 0x0)
-			usleep_range(10, 20);
-	}
-}
-
-void optee_release_affinity_a53(void)
-{
-	if (chipid == MESON_CPU_MAJOR_ID_G12B)
-		set_cpus_allowed_ptr(current, cpu_all_mask);
 }
