@@ -17,28 +17,23 @@ KERNEL_DRIVER_CROSS_COMPILE := aarch64-linux-gnu-
 KERNEL_CONFIG=meson64_defconfig
 endif
 
+OPTEE_MODULES := $(shell pwd)/$(PRODUCT_OUT)/obj/optee_modules
 include $(CLEAR_VARS)
 $(info $(shell if [ ! -d $(KERNEL_OUT_DIR) ]; then mkdir -p $(KERNEL_OUT_DIR); fi))
 
 $(info $(shell if [ ! -e $(KERNEL_OUT_DIR)/include/generated/autoconf.h ]; then $(MAKE) -C $(KERNEL_DIR) O=../$(KERNEL_OUT_DIR) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(KERNEL_DRIVER_CROSS_COMPILE) $(KERNEL_CONFIG); fi))
 
+
 $(info $(shell if [ ! -e $(KERNEL_OUT_DIR)/include/generated/autoconf.h ]; then $(MAKE) -C $(KERNEL_DIR) O=../$(KERNEL_OUT_DIR) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(KERNEL_DRIVER_CROSS_COMPILE) modules_prepare; fi))
 
-$(info $(shell $(MAKE) -C $(shell pwd)/$(KERNEL_OUT_DIR) M=$(shell pwd)/$(BOARD_AML_VENDOR_PATH)/tdk/linuxdriver/ KERNEL_A32_SUPPORT=$(KERNEL_A32_SUPPORT) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(KERNEL_DRIVER_CROSS_COMPILE) modules))
+$(info $(shell if [ ! -d $(OPTEE_MODULES) ]; then mkdir -p $(OPTEE_MODULES); fi))
+$(info $(shell cp $(LOCAL_PATH)/* $(OPTEE_MODULES) -rfa))
+$(info $(shell $(MAKE) -C $(shell pwd)/$(KERNEL_OUT_DIR) M=$(OPTEE_MODULES) KERNEL_A32_SUPPORT=$(KERNEL_A32_SUPPORT) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(KERNEL_DRIVER_CROSS_COMPILE) modules))
 
-$(info $(shell mkdir -p $(PRODUCT_OUT)/obj/lib))
-$(info $(shell cp -vf $(LOCAL_PATH)/optee/optee_armtz.ko $(PRODUCT_OUT)/obj/lib))
-$(info $(shell cp -vf $(LOCAL_PATH)/optee.ko $(PRODUCT_OUT)/obj/lib))
-
-armtz_ko_file := $(wildcard $(LOCAL_PATH)/optee/*.ko)
-armtz_ko_file := $(patsubst $(LOCAL_PATH)/optee/%,%,$(armtz_ko_file))
-
-core_ko_file := $(wildcard $(LOCAL_PATH)/*.ko)
-core_ko_file := $(patsubst $(LOCAL_PATH)/%,%,$(core_ko_file))
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := optee_armtz
-LOCAL_SRC_FILES := optee/$(armtz_ko_file)
+LOCAL_PREBUILT_MODULE_FILE := $(OPTEE_MODULES)/optee/optee_armtz.ko
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_SUFFIX := .ko
@@ -48,7 +43,7 @@ include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := optee
-LOCAL_SRC_FILES := $(core_ko_file)
+LOCAL_PREBUILT_MODULE_FILE := $(OPTEE_MODULES)/optee.ko
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_SUFFIX := .ko
