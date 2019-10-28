@@ -246,6 +246,7 @@ static void optee_release(struct tee_context *ctx)
 			arg->cmd = OPTEE_MSG_CMD_CLOSE_SESSION;
 			arg->session = sess->session_id;
 			optee_do_call_with_arg(ctx, parg);
+			optee_timer_missed_destroy(ctx, sess->session_id);
 		}
 		kfree(sess);
 	}
@@ -511,6 +512,8 @@ static int optee_probe(struct platform_device *pdev)
 
 	optee_log_init(optee->teedev, logger_shm_pa, LOGGER_SHM_SIZE);
 
+	optee_timer_init(&optee->timer);
+
 	mutex_init(&optee->call_queue.mutex);
 	INIT_LIST_HEAD(&optee->call_queue.waiters);
 	optee_wait_queue_init(&optee->wait_queue);
@@ -545,6 +548,8 @@ err:
 static int optee_remove(struct platform_device *pdev)
 {
 	struct optee *optee = platform_get_drvdata(pdev);
+
+	optee_timer_destroy(&optee->timer);
 
 	optee_log_exit(optee->teedev);
 
