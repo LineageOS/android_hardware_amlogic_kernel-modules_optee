@@ -3,7 +3,7 @@ LOCAL_PATH := $(call my-dir)
 ifneq ($(TARGET_KERNEL_BUILT_FROM_SOURCE), false)
 
 OPTEE_MODULES := $(shell pwd)/$(PRODUCT_OUT)/obj/optee_modules/
-OPTEE_DRIVERS := $(shell pwd)/vendor/amlogic/common/tdk/linuxdriver/
+OPTEE_DRIVERS := $(shell pwd)/vendor/amlogic/common/tdk_linuxdriver/
 KERNEL_OUT_DIR := $(shell pwd)/$(PRODUCT_OUT)/obj/KERNEL_OBJ/
 
 ##############################################################################
