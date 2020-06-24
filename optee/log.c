@@ -54,6 +54,7 @@ static unsigned char *optee_log_buff;
 static uint32_t optee_log_mode = 1;
 static struct timer_list optee_log_timer;
 static uint8_t line_buff[OPTEE_LOG_LINE_MAX];
+static uint32_t looped = 0;
 static void *g_shm_va;
 
 static bool init_shm(phys_addr_t shm_pa, uint32_t shm_size)
@@ -128,8 +129,10 @@ static ssize_t log_buff_get_read_buff(char **buf, int len)
 		read_size = 0;
 	else if (reader < writer)
 		read_size = writer - reader;
-	else
+	else {
+		looped = 1;
 		read_size = ctl->total_size - reader;
+	}
 
 	if (read_size > len)
 		read_size = len;
@@ -148,6 +151,9 @@ static size_t log_print_text(char *buf, size_t size)
 	size_t text_size = size;
 	size_t len = 0;
 	char *line = line_buff;
+
+	if (size == 0)
+		return 0;
 
 	do {
 		const char *next = memchr(text, '\n', text_size);
@@ -175,27 +181,31 @@ static size_t log_print_text(char *buf, size_t size)
 	return len;
 }
 
-static ssize_t log_buff_dump(char *buf, size_t size)
+static ssize_t log_buff_dump(void)
 {
 	ssize_t len;
 	char *ptr = NULL;
+	unsigned int writer = 0;
 	struct optee_log_ctl_s *ctl = optee_log_ctl;
 
 	if (!ctl)
 		return 0;
 
-	len = ctl->reader;
-	if (len == 0)
-		return 0;
+	writer = ctl->writer;
+
+	if (looped) {
+		ptr = optee_log_buff + writer;
+		len = ctl->total_size - writer;
+
+		log_print_text(ptr, len);
+	}
 
 	ptr = optee_log_buff;
-	if (len > size) {
-		ptr += len - size;
-		len = size;
-	}
-	memcpy(buf, ptr, len);
+	len = writer;
 
-	return len;
+	log_print_text(ptr, len);
+
+	return 0;
 }
 
 static void log_buff_reset(void)
@@ -249,7 +259,9 @@ static ssize_t log_buff_store(struct class *cla, struct class_attribute *attr,
 static ssize_t log_buff_show(struct class *cla,
 		struct class_attribute *attr, char *buf)
 {
-	return log_buff_dump(buf, OPTEE_LOG_READ_MAX);
+	log_buff_dump();
+
+	return 0;
 }
 
 static struct class_attribute log_class_attrs[] = {
