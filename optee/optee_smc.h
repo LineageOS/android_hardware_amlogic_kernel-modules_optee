@@ -427,6 +427,21 @@ struct optee_smc_disable_shm_cache_result {
 	OPTEE_SMC_RPC_VAL(OPTEE_SMC_RPC_FUNC_CMD)
 
 /*
+ * flush watermark
+ *
+ * Call register usage:
+ * a0      SMC Function ID, OPTEE_SMC_FLUSH_WM
+ * a1-7    Not used
+ *
+ * Normal return register usage:
+ * a0      result
+ * a1-7    Preserved
+ */
+#define OPTEE_SMC_FUNCID_FLUSH_WM      0xE000
+#define OPTEE_SMC_FLUSH_WM \
+	OPTEE_SMC_FAST_CALL_VAL(OPTEE_SMC_FUNCID_FLUSH_WM)
+
+/*
  * set logger
  *
  * Call register usage:
@@ -443,6 +458,21 @@ struct optee_smc_disable_shm_cache_result {
 #define OPTEE_SMC_FUNCID_SET_LOGGER    0xE001
 #define OPTEE_SMC_SET_LOGGER \
     OPTEE_SMC_FAST_CALL_VAL(OPTEE_SMC_FUNCID_SET_LOGGER)
+
+/*
+ * check watermark status
+ *
+ * Call register usage:
+ * a0      SMC Function ID, OPTEE_SMC_CHECK_WM_STATUS
+ * a1-7    Not used
+ *
+ * Normal return register usage:
+ * a0      result
+ * a1-7    Preserved
+ */
+#define OPTEE_SMC_FUNCID_CHECK_WM_STATUS      0xE003
+#define OPTEE_SMC_CHECK_WM_STATUS \
+	OPTEE_SMC_FAST_CALL_VAL(OPTEE_SMC_FUNCID_CHECK_WM_STATUS)
 
 /* Returned in a0 */
 #define OPTEE_SMC_RETURN_UNKNOWN_FUNCTION 0xFFFFFFFF

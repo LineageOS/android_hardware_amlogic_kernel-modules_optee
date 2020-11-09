@@ -514,6 +514,8 @@ static int optee_probe(struct platform_device *pdev)
 
 	optee_timer_init(&optee->timer);
 
+	optee_wm_irq_register();
+
 	mutex_init(&optee->call_queue.mutex);
 	INIT_LIST_HEAD(&optee->call_queue.waiters);
 	optee_wait_queue_init(&optee->wait_queue);
@@ -548,6 +550,8 @@ err:
 static int optee_remove(struct platform_device *pdev)
 {
 	struct optee *optee = platform_get_drvdata(pdev);
+
+	optee_wm_irq_free();
 
 	optee_timer_destroy(&optee->timer);
 

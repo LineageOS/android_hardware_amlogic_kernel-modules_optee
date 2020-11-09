@@ -192,4 +192,7 @@ void optee_timer_init(struct optee_timer *timer);
 void optee_timer_destroy(struct optee_timer *timer);
 void optee_timer_missed_destroy(struct tee_context *ctx, u32 session);
 
+int optee_wm_irq_register(void);
+void optee_wm_irq_free(void);
+
 #endif /*OPTEE_PRIVATE_H*/

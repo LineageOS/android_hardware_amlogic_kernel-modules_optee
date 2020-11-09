@@ -14,3 +14,4 @@ else
 optee_armtz-objs += smccc-call.o
 endif
 optee_armtz-objs += log.o
+optee_armtz-objs += watermark.o
