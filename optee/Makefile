@@ -1,6 +1,10 @@
+LOCAL_INCLUDES += -I$(KERNEL_SRC)/$(M)/../include  \
+               -I$(KERNEL_SRC)/$(M)/../include/linux \
+               -I$(KERNEL_SRC)/$(M)/include \
+               -I$(KERNEL_SRC)/$(M)/include/linux
+
 ccflags-y+=-Werror
-ccflags-y+=-I$(M)/include/linux
-ccflags-y+=-I$(M)/include
+ccflags-y+=$(LOCAL_INCLUDES)
 
 obj-m += optee_armtz.o
 
