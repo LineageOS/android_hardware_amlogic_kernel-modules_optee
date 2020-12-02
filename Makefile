@@ -7,7 +7,9 @@ optee-objs := tee_core.o \
 	      tee_shm.o \
 	      tee_shm_pool.o
 
-LOCAL_INCLUDES += -I$(KERNEL_SRC)/$(M)/include \
+LOCAL_INCLUDES += -I$(M)/include \
+                -I$(M)/include/linux \
+                -I$(KERNEL_SRC)/$(M)/include \
                 -I$(KERNEL_SRC)/$(M)/include/linux
 
 ccflags-y+=$(LOCAL_INCLUDES)

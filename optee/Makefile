@@ -1,4 +1,8 @@
-LOCAL_INCLUDES += -I$(KERNEL_SRC)/$(M)/../include  \
+LOCAL_INCLUDES += -I$(M)/../include  \
+               -I$(M)/../include/linux \
+               -I$(M)/include \
+               -I$(M)/include/linux \
+               -I$(KERNEL_SRC)/$(M)/../include \
                -I$(KERNEL_SRC)/$(M)/../include/linux \
                -I$(KERNEL_SRC)/$(M)/include \
                -I$(KERNEL_SRC)/$(M)/include/linux
