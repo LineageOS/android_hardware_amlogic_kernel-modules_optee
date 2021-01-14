@@ -5,7 +5,8 @@ obj-y += optee/
 
 optee-objs := tee_core.o \
 	      tee_shm.o \
-	      tee_shm_pool.o
+	      tee_shm_pool.o \
+	      tee_data_pipe.o
 
 LOCAL_INCLUDES += -I$(M)/include \
                 -I$(M)/include/linux \
@@ -15,7 +16,6 @@ LOCAL_INCLUDES += -I$(M)/include \
 ccflags-y+=$(LOCAL_INCLUDES)
 EXTRA_CFLAGS += $(LOCAL_INCLUDES)
 
-$(warning EXTRAL_FLAGS=$(EXTRAL_FLAGS))
 all:
 	@$(MAKE) -C $(KERNEL_SRC) M=$(M)  modules
 	#@$(MAKE) -C $(KERNEL_SRC) M=$(M)/optee --trace  modules

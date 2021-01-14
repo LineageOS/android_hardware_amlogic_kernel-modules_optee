@@ -368,6 +368,48 @@ struct tee_iocl_supp_send_arg {
 #define TEE_IOC_SUPPL_SEND	_IOR(TEE_IOC_MAGIC, TEE_IOC_BASE + 7, \
 				     struct tee_ioctl_buf_data)
 
+/**
+  * TEE_IOC_OPEN_DATA_PIPE
+  */
+struct tee_iocl_data_pipe_context {
+	__u32 id;
+	__u32 cache_size;
+	__u32 mode;
+	__u32 type;
+	__u32 data_ptr;
+	__u32 data_size;
+};
+#define TEE_IOC_OPEN_DATA_PIPE	_IOR(TEE_IOC_MAGIC, TEE_IOC_BASE + 8, \
+					struct tee_iocl_data_pipe_context)
+
+/**
+  * TEE_IOC_CLOSE_DATA_PIPE
+  */
+#define TEE_IOC_CLOSE_DATA_PIPE	_IOR(TEE_IOC_MAGIC, TEE_IOC_BASE + 9, \
+					struct tee_iocl_data_pipe_context)
+
+/**
+  * TEE_IOC_WRITE_PIPE_DATA
+  */
+#define TEE_IOC_WRITE_PIPE_DATA	_IOR(TEE_IOC_MAGIC, TEE_IOC_BASE + 10, \
+					struct tee_iocl_data_pipe_context)
+
+/**
+  * TEE_IOC_READ_PIPE_DATA
+  */
+#define TEE_IOC_READ_PIPE_DATA	_IOR(TEE_IOC_MAGIC, TEE_IOC_BASE + 11, \
+					struct tee_iocl_data_pipe_context)
+
+/**
+  * TEE_IOC_LISTEN_DATA_PIPE
+  */
+#define TEE_IOC_LISTEN_DATA_PIPE _IOR(TEE_IOC_MAGIC, TEE_IOC_BASE + 12, __u32)
+
+/**
+  * TEE_IOC_ACCEPT_DATA_PIPE
+  */
+#define TEE_IOC_ACCEPT_DATA_PIPE _IOR(TEE_IOC_MAGIC, TEE_IOC_BASE + 13, __u32)
+
 /*
  * Five syscalls are used when communicating with the TEE driver.
  * open(): opens the device associated with the driver

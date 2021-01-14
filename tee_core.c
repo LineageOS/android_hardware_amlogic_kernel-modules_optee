@@ -21,6 +21,7 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
+#include <linux/tee_data_pipe.h>
 #include "tee_drv.h"
 #include "tee_private.h"
 
@@ -640,6 +641,18 @@ static long tee_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		return tee_ioctl_supp_recv(ctx, uarg);
 	case TEE_IOC_SUPPL_SEND:
 		return tee_ioctl_supp_send(ctx, uarg);
+	case TEE_IOC_OPEN_DATA_PIPE:
+		return tee_ioctl_open_data_pipe(ctx, uarg);
+	case TEE_IOC_CLOSE_DATA_PIPE:
+		return tee_ioctl_close_data_pipe(ctx, uarg);
+	case TEE_IOC_WRITE_PIPE_DATA:
+		return tee_ioctl_write_pipe_data(ctx, uarg);
+	case TEE_IOC_READ_PIPE_DATA:
+		return tee_ioctl_read_pipe_data(ctx, uarg);
+	case TEE_IOC_LISTEN_DATA_PIPE:
+		return tee_ioctl_listen_data_pipe(ctx, uarg);
+	case TEE_IOC_ACCEPT_DATA_PIPE:
+		return tee_ioctl_accept_data_pipe(ctx, uarg);
 	default:
 		return -EINVAL;
 	}
@@ -1011,11 +1024,15 @@ static int __init tee_init(void)
 		tee_class = NULL;
 	}
 
+	init_data_pipe_set();
+
 	return rc;
 }
 
 static void __exit tee_exit(void)
 {
+	destroy_data_pipe_set();
+
 	class_destroy(tee_class);
 	tee_class = NULL;
 	unregister_chrdev_region(tee_devt, TEE_NUM_DEVICES);
