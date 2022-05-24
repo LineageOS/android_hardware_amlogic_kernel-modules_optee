@@ -23,8 +23,8 @@ all:
 modules_install:
 	@echo "$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install"
 	@$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install
-	mkdir -p ${OUT_DIR}/private
-	cd ${OUT_DIR}/$(M)/; find -name "*.ko" -exec cp {} ${OUT_DIR}/private/ \;
+	mkdir -p ${OUT_DIR}/private/modules
+	cd ${OUT_DIR}/$(M)/; find -name "*.ko" -exec cp {} ${OUT_DIR}/private/modules/ \;
 
 
 clean:
