@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-ifneq ($(filter g12a g12b sm1,$(TARGET_AMLOGIC_SOC)),)
+ifneq ($(filter g12a g12b sm1 s4 sc2 t7,$(TARGET_AMLOGIC_SOC)),)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_PREBUILT_KERNEL),)
